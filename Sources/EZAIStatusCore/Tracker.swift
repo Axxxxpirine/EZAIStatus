@@ -6,6 +6,15 @@ public struct TrackedSubagent: Identifiable, Equatable, Sendable {
     public var state: ConversationState
     public var kind: ObservedSubagent.Kind = .agent
     public var startedAt: Date?
+
+    public init(id: String, title: String, state: ConversationState,
+                kind: ObservedSubagent.Kind = .agent, startedAt: Date? = nil) {
+        self.id = id
+        self.title = title
+        self.state = state
+        self.kind = kind
+        self.startedAt = startedAt
+    }
 }
 
 public struct TrackedConversation: Identifiable, Equatable, Sendable {
@@ -19,6 +28,18 @@ public struct TrackedConversation: Identifiable, Equatable, Sendable {
     public var project: String?
     /// Affichés sous la conversation, jamais comptés dans les compteurs.
     public var subagents: [TrackedSubagent] = []
+
+    public init(id: String, source: SourceKind, title: String, state: ConversationState, date: Date,
+                openURL: URL? = nil, project: String? = nil, subagents: [TrackedSubagent] = []) {
+        self.id = id
+        self.source = source
+        self.title = title
+        self.state = state
+        self.date = date
+        self.openURL = openURL
+        self.project = project
+        self.subagents = subagents
+    }
 }
 
 public struct SourceReport: Identifiable, Equatable, Sendable {
@@ -26,6 +47,12 @@ public struct SourceReport: Identifiable, Equatable, Sendable {
     public var status: SourceStatus
     public var note: String?
     public var id: SourceKind { source }
+
+    public init(source: SourceKind, status: SourceStatus, note: String? = nil) {
+        self.source = source
+        self.status = status
+        self.note = note
+    }
 }
 
 public struct Snapshot: Equatable, Sendable {

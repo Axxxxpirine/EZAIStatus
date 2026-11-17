@@ -38,19 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private func updateStatusItem() {
         guard let button = statusItem.button else { return }
         let snapshot = model.snapshot
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
-        let title = NSMutableAttributedString()
-        // Ordre de la maquette : en cours, attente, terminé. Seuls les états non nuls sont affichés.
-        for state in [ConversationState.running, .waiting, .finished] where snapshot.count(state) > 0 {
-            if title.length > 0 { title.append(NSAttributedString(string: "  ", attributes: [.font: font])) }
-            title.append(StatusSymbol.attachment(StatusSymbol.name(state), color: StatusSymbol.color(state), font: font))
-            title.append(NSAttributedString(string: " \(snapshot.count(state))",
-                                            attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
-        }
-        if !snapshot.problems.isEmpty {
-            if title.length > 0 { title.append(NSAttributedString(string: "  ", attributes: [.font: font])) }
-            title.append(StatusSymbol.attachment("exclamationmark.triangle.fill", color: .systemYellow, font: font))
-        }
+        let title = StatusSymbol.title(for: snapshot)
         if title.length == 0 {
             // Rien à suivre : une coche discrète, en image modèle pour suivre la couleur de la barre.
             let image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: nil)?
@@ -114,8 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
 MainActor.assumeIsolated {
     // Outil de développement : dessine le panneau réel dans un PNG, puis quitte.
+    // Avec --demo : conversations fictives, rendu Retina, barre des menus et visuel de présentation en plus.
     if let index = CommandLine.arguments.firstIndex(of: "--render-preview"), index + 1 < CommandLine.arguments.count {
-        PreviewRenderer.render(to: URL(fileURLWithPath: CommandLine.arguments[index + 1]))
+        PreviewRenderer.render(to: URL(fileURLWithPath: CommandLine.arguments[index + 1]),
+                               demo: CommandLine.arguments.contains("--demo"))
         exit(0)
     }
     let app = NSApplication.shared
@@ -141,6 +131,25 @@ enum StatusSymbol {
         case .waiting: .systemOrange
         case .finished: .systemGreen
         }
+    }
+
+    /// Titre de l'élément de barre des menus : symbole et nombre pour chaque état non nul, triangle si une source est illisible.
+    /// Vide quand il n'y a rien à suivre.
+    static func title(for snapshot: Snapshot) -> NSMutableAttributedString {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+        let title = NSMutableAttributedString()
+        // Ordre de la maquette : en cours, attente, terminé. Seuls les états non nuls sont affichés.
+        for state in [ConversationState.running, .waiting, .finished] where snapshot.count(state) > 0 {
+            if title.length > 0 { title.append(NSAttributedString(string: "  ", attributes: [.font: font])) }
+            title.append(attachment(name(state), color: color(state), font: font))
+            title.append(NSAttributedString(string: " \(snapshot.count(state))",
+                                            attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        }
+        if !snapshot.problems.isEmpty {
+            if title.length > 0 { title.append(NSAttributedString(string: "  ", attributes: [.font: font])) }
+            title.append(attachment("exclamationmark.triangle.fill", color: .systemYellow, font: font))
+        }
+        return title
     }
 
     /// Symbole en pièce jointe, centré sur la hauteur des chiffres. Les symboles pleins gardent leur glyphe en blanc.

@@ -2,6 +2,11 @@
 
 *[Version française](README.fr.md)*
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-en-dark.jpg">
+  <img src="docs/hero-en.jpg" alt="EZAIStatus: the menu bar item and its panel, with conversations running, waiting for you and finished" width="800">
+</picture>
+
 A tiny macOS menu bar app that shows how many AI coding conversations on this Mac are **running**, **waiting for you**,
 or **finished** with a response you haven't read yet. Click it to see the titles grouped by state (waiting first), with the
 project and the active subagents or background commands. Click a title to open that conversation directly.

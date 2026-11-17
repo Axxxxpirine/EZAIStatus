@@ -2,6 +2,11 @@
 
 *[English version](README.md)*
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-fr-dark.jpg">
+  <img src="docs/hero-fr.jpg" alt="EZAIStatus : l'élément de la barre des menus et son panneau, avec des conversations en cours, en attente et terminées" width="800">
+</picture>
+
 Petite app de la barre des menus macOS qui montre combien de conversations de code avec une IA sont, sur ce Mac,
 **en cours**, **en attente de ta réponse** ou **terminées** sans que tu aies lu la réponse. Un clic affiche les titres
 groupés par état (attente en premier), avec le projet et les sous-agents ou commandes en arrière-plan actifs. Un clic sur

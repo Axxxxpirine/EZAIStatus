@@ -103,6 +103,12 @@ final class AppModel {
         }
     }
 
+    /// Captures publiques : affiche des données fictives à la place du balayage.
+    func showDemo(_ snapshot: Snapshot) {
+        apply(snapshot)
+        lastScan = Date()
+    }
+
     private func apply(_ snapshot: Snapshot) {
         guard snapshot != self.snapshot else { return }
         self.snapshot = snapshot
