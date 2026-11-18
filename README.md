@@ -40,14 +40,15 @@ swift test                       # core tests
 scripts/build-app.sh             # build/EZAIStatus.app, ad hoc signature for this Mac
 scripts/build-app.sh --release   # Developer ID signature + hardened runtime
 scripts/notarize-xcode.sh        # notarization with the account signed in to Xcode, builds build/EZAIStatus.zip
-scripts/publish-update.sh        # Sparkle update (zip + signed appcast), once release.env is filled in
+scripts/publish-update.sh        # Sparkle update: notarizes, then zip + signed appcast in build/updates/
 swift scripts/make-icon.swift    # regenerates Resources/AppIcon.icns
 ```
 
 Headless diagnostics: `swift run ezaistatus-probe` (or `--all`) prints what each connector sees.
 
-Automatic updates use [Sparkle](https://sparkle-project.org). They stay disabled until `release.env` holds the appcast URL
-and the public EdDSA key.
+Automatic updates use [Sparkle](https://sparkle-project.org): the app reads a signed (EdDSA) appcast whose URL and public key
+come from `release.env`, and downloads the zip from GitHub Releases. In a fork, put your own values there; left empty, updates
+are disabled.
 
 ## License
 

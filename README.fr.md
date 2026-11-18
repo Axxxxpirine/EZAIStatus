@@ -43,14 +43,15 @@ swift test                       # tests du cœur
 scripts/build-app.sh             # build/EZAIStatus.app, signature ad hoc pour ce Mac
 scripts/build-app.sh --release   # signature Developer ID + runtime renforcé
 scripts/notarize-xcode.sh        # notarisation avec le compte connecté dans Xcode, produit build/EZAIStatus.zip
-scripts/publish-update.sh        # mise à jour Sparkle (zip + appcast signé), une fois release.env rempli
+scripts/publish-update.sh        # mise à jour Sparkle : notarise, puis zip + appcast signé dans build/updates/
 swift scripts/make-icon.swift    # régénère Resources/AppIcon.icns
 ```
 
 Diagnostic sans interface : `swift run ezaistatus-probe` (ou `--all`) affiche ce que voit chaque connecteur.
 
-Les mises à jour automatiques passent par [Sparkle](https://sparkle-project.org). Elles restent inactives tant que
-`release.env` ne contient pas l'adresse de l'appcast et la clé publique EdDSA.
+Les mises à jour automatiques passent par [Sparkle](https://sparkle-project.org) : l'app lit un appcast signé (EdDSA) dont
+l'adresse et la clé publique viennent de `release.env`, et télécharge le zip depuis les Releases GitHub. Pour un fork, y mettre
+ses propres valeurs ; laissées vides, les mises à jour sont désactivées.
 
 ## Licence
 

@@ -20,8 +20,9 @@ cp Resources/Info.plist "$app/Contents/Info.plist"
 # Sparkle : framework embarqué (liens symboliques conservés), flux et clé publique depuis release.env.
 mkdir -p "$app/Contents/Frameworks"
 ditto "$(dirname "$binary")/Sparkle.framework" "$app/Contents/Frameworks/Sparkle.framework"
-feed=${SPARKLE_FEED_URL:-$(awk -F= '$1=="SPARKLE_FEED_URL" {print $2}' release.env)}
-key=${SPARKLE_PUBLIC_KEY:-$(awk -F= '$1=="SPARKLE_PUBLIC_KEY" {print $2}' release.env)}
+# sed et non awk -F= : la clé publique se termine elle-même par « = ».
+feed=${SPARKLE_FEED_URL:-$(sed -n 's/^SPARKLE_FEED_URL=//p' release.env)}
+key=${SPARKLE_PUBLIC_KEY:-$(sed -n 's/^SPARKLE_PUBLIC_KEY=//p' release.env)}
 if [[ -n $feed && -n $key ]]; then
   /usr/libexec/PlistBuddy -c "Add :SUFeedURL string $feed" -c "Add :SUPublicEDKey string $key" "$app/Contents/Info.plist"
   echo "Mises à jour : $feed"

@@ -108,11 +108,26 @@ MainActor.assumeIsolated {
                                demo: CommandLine.arguments.contains("--demo"))
         exit(0)
     }
+    LegacySettings.migrate()
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.accessory)
     withExtendedLifetime(delegate) { app.run() }
+}
+
+/// Jusqu'à la 0.1.1, l'app s'appelait `io.github.axxxxpirine.EZAIStatus` : au premier lancement sous le nouvel
+/// identifiant, elle reprend les réglages enregistrés sous l'ancien (macOS les range par identifiant).
+enum LegacySettings {
+    static func migrate() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "legacySettingsMigrated") else { return }
+        defaults.set(true, forKey: "legacySettingsMigrated")
+        guard let old = defaults.persistentDomain(forName: "io.github.axxxxpirine.EZAIStatus") else { return }
+        for key in [L10n.defaultsKey, "notifyFinished", "notifyWaiting"] where defaults.object(forKey: key) == nil {
+            if let value = old[key] { defaults.set(value, forKey: key) }
+        }
+    }
 }
 
 /// Symboles SF de la barre des menus : mêmes formes et couleurs vives sur barre claire comme sombre.

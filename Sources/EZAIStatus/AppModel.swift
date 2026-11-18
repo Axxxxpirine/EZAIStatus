@@ -30,7 +30,7 @@ final class AppModel {
     @ObservationIgnored var onLanguageChange: (() -> Void)?
     @ObservationIgnored private let tracker: Tracker
     @ObservationIgnored private let home = FileManager.default.homeDirectoryForCurrentUser
-    @ObservationIgnored private let scanQueue = DispatchQueue(label: "io.github.axxxxpirine.ezaistatus.scan", qos: .utility)
+    @ObservationIgnored private let scanQueue = DispatchQueue(label: "dev.xprn.ezaistatus.scan", qos: .utility)
     @ObservationIgnored private var watcher: FileWatcher?
     @ObservationIgnored private var refreshScheduled = false
     @ObservationIgnored private var scanning = false

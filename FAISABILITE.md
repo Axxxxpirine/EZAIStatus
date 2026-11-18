@@ -94,11 +94,13 @@ et l'indicateur « source illisible » plutôt qu'un faux zéro.
 
 - Sparkle 2 (paquet Swift officiel), framework embarqué dans `Contents/Frameworks` et signé de l'intérieur vers l'extérieur
   par `scripts/build-app.sh`.
-- Inactif tant que `release.env` est vide : il faut l'adresse HTTPS publique de l'appcast et la clé publique EdDSA
+- Réglé par `release.env` (inactif si vide) : adresse HTTPS publique de l'appcast, clé publique EdDSA
   (`.build/artifacts/sparkle/Sparkle/bin/generate_keys`, clé privée dans le trousseau, à sauvegarder avec `generate_keys -x`).
 - Sparkle demande l'accord de l'utilisateur avant toute vérification automatique ; réglage et bouton « Rechercher maintenant »
   dans les réglages.
-- Publier : `scripts/publish-update.sh` met le zip notarisé versionné et `appcast.xml` signé dans `build/updates/`, à déposer
-  dans le dossier de l'adresse du flux. Notes de version facultatives dans `notes/<version>.md`.
-- Testé de bout en bout avec une clé jetable et un serveur local : une 0.1.0 a trouvé, vérifié et installé une 0.1.1 à sa fermeture.
+- Publier : `scripts/publish-update.sh` met le zip notarisé versionné et `appcast.xml` signé dans `build/updates/`. Le zip va
+  d'abord dans la Release GitHub de la version (`SPARKLE_DOWNLOAD_PREFIX`), puis l'appcast à l'adresse du flux : il ne doit
+  jamais annoncer un zip absent. Notes de version facultatives dans `notes/<version>.md`, intégrées à l'appcast.
+- Testé de bout en bout avant chaque publication avec un serveur local : une version antérieure trouve le zip notarisé,
+  vérifie sa signature et s'installe à la fermeture (0.1.0 → 0.1.2 avec la vraie clé).
 - Piège : `SULastCheckTime` est enregistré même quand le flux répond 404, ce qui repousse la vérification suivante de 24 h.
