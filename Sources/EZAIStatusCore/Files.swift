@@ -44,14 +44,33 @@ enum JSONLTail {
 final class ReadOnlyDatabase {
     private var db: OpaquePointer?
 
+    /// `nil` si la base ne se lit pas : absente, verrouillée ou pas une base SQLite.
     init?(url: URL) {
-        let uri = "file:\(url.path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? url.path)?mode=ro"
-        let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_URI | SQLITE_OPEN_NOMUTEX
-        guard sqlite3_open_v2(uri, &db, flags, nil) == SQLITE_OK else {
-            sqlite3_close(db)
-            return nil
+        let path = url.path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? url.path
+        var result = open("file:\(path)?mode=ro")
+        // Base en mode WAL dont l'app propriétaire a fermé toutes ses connexions (Codex inactif) : SQLite a
+        // retiré le fichier `-wal` et une connexion en lecture seule ne peut pas le recréer. Tout le contenu
+        // est alors dans le fichier principal, que `immutable` lit tel quel, sans WAL ni verrou.
+        if result == SQLITE_CANTOPEN, !FileManager.default.fileExists(atPath: url.path + "-wal") {
+            result = open("file:\(path)?mode=ro&immutable=1")
         }
-        sqlite3_busy_timeout(db, 500)
+        guard result == SQLITE_OK else { return nil }
+    }
+
+    /// Ouvre puis lit le schéma : `sqlite3_open_v2` seul ne touche pas encore au fichier, une base
+    /// illisible n'échouerait qu'à la première requête (et passerait pour une base vide).
+    private func open(_ uri: String) -> Int32 {
+        let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_URI | SQLITE_OPEN_NOMUTEX
+        var result = sqlite3_open_v2(uri, &db, flags, nil)
+        if result == SQLITE_OK {
+            sqlite3_busy_timeout(db, 500)
+            result = sqlite3_exec(db, "SELECT 1 FROM sqlite_master LIMIT 1", nil, nil, nil)
+        }
+        if result != SQLITE_OK {
+            sqlite3_close(db)
+            db = nil
+        }
+        return result
     }
 
     deinit { sqlite3_close(db) }

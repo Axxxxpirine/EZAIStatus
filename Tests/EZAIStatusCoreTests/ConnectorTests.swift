@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import EZAIStatusCore
 
@@ -55,6 +56,35 @@ struct CodexTests {
             FileManager.default.createFile(atPath: dir.appendingPathComponent(name).path, contents: Data())
         }
         #expect(CodexConnector.stateDatabase(in: dir)?.lastPathComponent == "state_12.sqlite")
+    }
+
+    /// Codex inactif ferme sa base : SQLite retire alors `-wal` et `-shm`, et une ouverture en lecture
+    /// seule ordinaire échoue (SQLITE_CANTOPEN) tant que Codex n'y retouche pas.
+    @Test func readsWALDatabaseLeftWithoutWALFile() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("state_5.sqlite")
+        var handle: OpaquePointer?
+        #expect(sqlite3_open(url.path, &handle) == SQLITE_OK)
+        let setup = "PRAGMA journal_mode=WAL; CREATE TABLE threads(id TEXT, title TEXT); INSERT INTO threads VALUES('a', 'Titre');"
+        #expect(sqlite3_exec(handle, setup, nil, nil, nil) == SQLITE_OK)
+        sqlite3_close(handle)
+        for suffix in ["-wal", "-shm"] { try? FileManager.default.removeItem(atPath: url.path + suffix) }
+
+        let db = try #require(ReadOnlyDatabase(url: url))
+        #expect(db.columns(of: "threads") == ["id", "title"])
+        #expect(db.rows("SELECT title FROM threads").first?["title"] as? String == "Titre")
+        // Toujours sans rien créer à côté de la base d'une autre app.
+        #expect(!FileManager.default.fileExists(atPath: url.path + "-wal"))
+    }
+
+    /// Une base qu'on n'arrive pas à lire doit être signalée comme telle, pas comme un « format inconnu ».
+    @Test func unreadableDatabaseIsNotOpened() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("state_5.sqlite")
+        try Data("ceci n'est pas une base SQLite, juste du texte assez long.".utf8).write(to: url)
+        #expect(ReadOnlyDatabase(url: url) == nil)
     }
 }
 
