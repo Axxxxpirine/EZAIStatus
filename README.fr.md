@@ -53,6 +53,19 @@ Les mises à jour automatiques passent par [Sparkle](https://sparkle-project.org
 l'adresse et la clé publique viennent de `release.env`, et télécharge le zip depuis les Releases GitHub. Pour un fork, y mettre
 ses propres valeurs ; laissées vides, les mises à jour sont désactivées.
 
+## Touche Stream Deck
+
+Le dossier `StreamDeck/` contient un plugin Stream Deck (7.1 ou plus récent) : une touche qui affiche les conversations en
+cours (bleu), terminées non lues (vert) et une pastille orange si l'une attend ta réponse. Un appui ouvre la plus ancienne
+conversation terminée, sinon le panneau. EZAIStatus écrit pour cela un petit fichier d'état local,
+`~/Library/Application Support/EZAIStatus/status.json` ; sans l'app lancée, la touche affiche « hors ligne ».
+
+```bash
+cd StreamDeck
+npm install && npm run build
+npx streamdeck link dev.xprn.ezaistatus.sdPlugin   # puis glisser l'action « Agents IA » sur une touche
+```
+
 ## Licence
 
 [MIT](LICENSE)

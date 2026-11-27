@@ -36,6 +36,8 @@ final class AppModel {
     @ObservationIgnored private var scanning = false
     @ObservationIgnored private var rescanAfterCurrent = false
     @ObservationIgnored private var fallbackTimer: Timer?
+    /// Actions en attente du premier balayage (liens reçus au lancement), `nil` une fois ce balayage fait.
+    @ObservationIgnored private var afterFirstScan: [() -> Void]? = []
 
     private enum Keys {
         static let notifyFinished = "notifyFinished"
@@ -92,9 +94,14 @@ final class AppModel {
                 guard let self else { return }
                 let (snapshot, transitions) = self.tracker.update(results)
                 self.apply(snapshot)
+                self.exportStatus()
                 self.notify(transitions)
                 self.lastScan = Date()
                 self.scanning = false
+                if let pending = self.afterFirstScan {
+                    self.afterFirstScan = nil
+                    pending.forEach { $0() }
+                }
                 if self.rescanAfterCurrent {
                     self.rescanAfterCurrent = false
                     self.scheduleRefresh()
@@ -130,6 +137,8 @@ final class AppModel {
     func open(_ conversation: TrackedConversation) {
         if let url = conversation.openURL, NSWorkspace.shared.open(url) {
             apply(tracker.acknowledge(conversation))
+            // La touche Stream Deck doit perdre cette terminée tout de suite, sans attendre le balayage suivant.
+            exportStatus()
             return
         }
         openApp(conversation.source)
@@ -137,6 +146,28 @@ final class AppModel {
 
     func open(conversationID: String) {
         if let conversation = snapshot.conversations.first(where: { $0.id == conversationID }) { open(conversation) }
+    }
+
+    /// Exécute `action` tout de suite si le premier balayage est fait, sinon juste après lui.
+    func afterFirstScan(_ action: @escaping () -> Void) {
+        if afterFirstScan != nil { afterFirstScan?.append(action) } else { action() }
+    }
+
+    /// Touche Stream Deck : ouvre la plus ancienne conversation terminée. `false` s'il n'y en a pas.
+    func openNext() -> Bool {
+        guard let conversation = snapshot.oldestFinished else { return false }
+        open(conversation)
+        return true
+    }
+
+    /// Réécrit l'état résumé à chaque balayage, même inchangé : sa date prouve que l'app tourne.
+    private func exportStatus() {
+        try? StatusExport(snapshot: snapshot, now: Date()).write(to: StatusExport.fileURL(home: home))
+    }
+
+    /// À la fermeture : sans fichier, la touche passe tout de suite « hors ligne ».
+    func stopExport() {
+        StatusExport.remove(at: StatusExport.fileURL(home: home))
     }
 
     private func openApp(_ source: SourceKind) {

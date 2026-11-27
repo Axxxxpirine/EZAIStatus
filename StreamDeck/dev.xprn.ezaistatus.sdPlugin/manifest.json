@@ -1,0 +1,41 @@
+{
+	"Name": "EZAIStatus",
+	"Version": "0.1.0.0",
+	"Author": "Axxxxpirine",
+	"Actions": [
+		{
+			"Name": "Agents IA",
+			"UUID": "dev.xprn.ezaistatus.agents",
+			"Icon": "imgs/actions/agents/icon",
+			"Tooltip": "Conversations IA en cours, terminées et en attente suivies par EZAIStatus. Appui : ouvre la plus ancienne terminée.",
+			"Controllers": ["Keypad"],
+			"DisableAutomaticStates": true,
+			"UserTitleEnabled": false,
+			"States": [
+				{
+					"Image": "imgs/actions/agents/key",
+					"ShowTitle": false
+				}
+			]
+		}
+	],
+	"Category": "EZAIStatus",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Affiche sur une touche les conversations Codex et Claude Code en cours, terminées et en attente, d'après l'app EZAIStatus.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "14"
+		}
+	],
+	"Nodejs": {
+		"Version": "24"
+	},
+	"UUID": "dev.xprn.ezaistatus"
+}

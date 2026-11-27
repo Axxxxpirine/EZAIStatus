@@ -50,6 +50,19 @@ Automatic updates use [Sparkle](https://sparkle-project.org): the app reads a si
 come from `release.env`, and downloads the zip from GitHub Releases. In a fork, put your own values there; left empty, updates
 are disabled.
 
+## Stream Deck key
+
+The `StreamDeck/` folder holds a Stream Deck plugin (7.1 or later): one key showing the conversations running (blue),
+finished and unread (green), and an orange badge when one is waiting for you. Pressing it opens the oldest finished
+conversation, or the panel. EZAIStatus writes a small local status file for it,
+`~/Library/Application Support/EZAIStatus/status.json`; when the app isn't running, the key shows “offline”.
+
+```bash
+cd StreamDeck
+npm install && npm run build
+npx streamdeck link dev.xprn.ezaistatus.sdPlugin   # then drag the “Agents IA” action onto a key
+```
+
 ## License
 
 [MIT](LICENSE)

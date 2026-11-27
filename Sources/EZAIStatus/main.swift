@@ -9,6 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var settingsWindow: NSWindow?
+    /// Liens reçus avant la fin du lancement : au lancement à froid par URL, `application(_:open:)` arrive
+    /// avant `applicationDidFinishLaunching`, quand la barre des menus n'existe pas encore. `nil` ensuite.
+    private var pendingLinks: [URL]? = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -31,6 +34,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         updateStatusItem()
         model.start()
         Updater.shared.start()
+        // Après le premier balayage : `next` connaît alors les terminées, et l'icône de la barre des menus a sa place
+        // pour y accrocher le panneau.
+        let links = pendingLinks ?? []
+        pendingLinks = nil
+        if !links.isEmpty { model.afterFirstScan { [weak self] in self?.handle(links) } }
     }
 
     // MARK: Barre des menus
@@ -60,14 +68,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func togglePopover() {
-        guard let button = statusItem.button else { return }
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            model.scheduleRefresh()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            showPopover()
         }
+    }
+
+    private func showPopover() {
+        guard let button = statusItem?.button, !popover.isShown else { return }
+        model.scheduleRefresh()
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+    }
+
+    // MARK: Liens ezaistatus:// (touche Stream Deck)
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        if pendingLinks != nil {
+            pendingLinks?.append(contentsOf: urls)
+        } else {
+            handle(urls)
+        }
+    }
+
+    private func handle(_ urls: [URL]) {
+        for url in urls where url.scheme?.lowercased() == "ezaistatus" {
+            switch url.host?.lowercased() {
+            case "next":
+                // Au lancement par le lien, le premier balayage n'est pas fini : le panneau s'ouvre.
+                if !model.openNext() { showPanelFromLink() }
+            case "panel":
+                showPanelFromLink()
+            default:
+                break
+            }
+        }
+    }
+
+    private func showPanelFromLink() {
+        NSApp.activate(ignoringOtherApps: true)
+        showPopover()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        model.stopExport()
     }
 
     // MARK: Réglages
